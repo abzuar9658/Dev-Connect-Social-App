@@ -18,8 +18,8 @@ exports.getProfile = catchAsync(async (req, res, next) => {
     'name',
     'avatar',
   ]);
-  const profile = await query;
-
+  let profile = await query;
+  profile = profile[0];
   if (!profile) {
     return next(new AppError('No document found with that ID', 404));
   }
@@ -50,23 +50,27 @@ exports.createProfile = catchAsync(async (req, res, next) => {
 exports.updateProfile = catchAsync(async (req, res, next) => {
   if (req.body.skills) {
     let skills = [];
-    skills = req.body.skills.split(',').trim();
+    skills = req.body.skills.trim().split(',');
     req.body.skills = skills;
   }
 
-  const doc = await Profile.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
+  const profile = await Profile.findOneAndUpdate(
+    { user: req.params.id },
+    req.body,
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
 
-  if (!doc) {
+  if (!profile) {
     return next(new AppError('No document found with that ID', 404));
   }
 
   res.status(200).json({
     status: 'success',
     data: {
-      data: doc,
+      data: profile,
     },
   });
 });
@@ -85,7 +89,8 @@ exports.deleteProfile = catchAsync(async (req, res, next) => {
 });
 
 exports.addEducation = catchAsync(async (req, res, next) => {
-  const profile = await Profile.findById(req.params.id);
+  let profile = await Profile.find({ user: req.params.id });
+  profile = profile[0];
   profile.education.unshift(req.body);
   await profile.save();
 
@@ -98,7 +103,8 @@ exports.addEducation = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteEducation = catchAsync(async (req, res, next) => {
-  const profile = await Profile.findById(req.params.id);
+  let profile = await Profile.find({ user: req.params.id });
+  profile = profile[0];
   const removeIndex = profile.education
     .map((item) => item.id)
     .indexOf(req.params.eduId);
@@ -114,7 +120,8 @@ exports.deleteEducation = catchAsync(async (req, res, next) => {
 });
 
 exports.addExperience = catchAsync(async (req, res, next) => {
-  const profile = await Profile.findById(req.params.id);
+  let profile = await Profile.find({ user: req.params.id });
+  profile = profile[0];
   profile.experience.unshift(req.body);
   await profile.save();
 
@@ -127,7 +134,8 @@ exports.addExperience = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteExperience = catchAsync(async (req, res, next) => {
-  const profile = await Profile.findById(req.params.id);
+  let profile = await Profile.find({ user: req.params.id });
+  profile = profile[0];
   const removeIndex = profile.experience
     .map((item) => item.id)
     .indexOf(req.params.expId);
